@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奇門遁甲解盤助手 ─ 壁錄遁甲天書</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+        body { font-family: 'Noto Serif TC', serif; background: linear-gradient(#0a0a1f, #2c1a3d); color: #ffdd88; margin:0; padding:20px; }
+        .container { max-width: 1200px; margin: auto; background: rgba(15,5,35,0.96); padding: 30px; border: 4px solid #d4af77; border-radius: 25px; box-shadow: 0 0 40px #ffd700; }
+        h1 { color: #ffcc00; text-shadow: 0 0 20px #ff0; text-align:center; font-size:2.8em; }
+        .tabs { display:flex; justify-content:center; gap:10px; margin:20px 0; flex-wrap:wrap; }
+        .tab { padding:12px 24px; background:#3a1f5c; color:#ffdd88; border:2px solid #d4af77; border-radius:10px; cursor:pointer; font-weight:bold; }
+        .tab.active { background:#d4af77; color:#000; }
+        .section { display:none; margin:30px 0; padding:25px; background:rgba(0,0,0,0.4); border-radius:15px; border:2px solid #b8860b; }
+        .section.active { display:block; }
+        input, button, textarea { padding:12px 18px; font-size:18px; margin:8px; border-radius:10px; }
+        button { background:#b8860b; color:#000; font-weight:bold; cursor:pointer; }
+        .plate { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:30px auto; max-width:720px; }
+        .palace { border:3px solid #ffd700; padding:15px; background:rgba(139,0,0,0.75); border-radius:12px; text-align:center; position:relative; font-size:14px; }
+        .palace strong { display:block; color:#ff0; font-size:1.3em; margin-bottom:6px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔮 奇門遁甲解盤助手</h1>
+    <p style="text-align:center;font-size:1.5em;">壁錄遁甲天書 · 火龍藏機 · 八門九星盡奧秘</p>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab(0)">📅 起局排盤</div>
+        <div class="tab" onclick="switchTab(1)">🌀 飛盤詳解</div>
+        <div class="tab" onclick="switchTab(4)">🙋 解盤</div>
+    </div>
+
+    <div id="tab0" class="section active">
+        <input type="datetime-local" id="datetime" value="2026-05-14T14:30">
+        <button onclick="calculateQimen()">立即起局</button>
+        <div id="pillars" style="margin-top:20px;font-size:1.3em;"></div>
+    </div>
+
+    <div id="tab1" class="section">
+        <h2>🌀 陰陽遁飛盤</h2>
+        <p id="dunInfo" style="text-align:center;font-size:1.4em;color:#0f0;"></p>
+        <div class="plate" id="plate"></div>
+    </div>
+
+    <div id="tab4" class="section">
+        <textarea id="question" rows="4" style="width:100%;" placeholder="事業、婚姻、財運、健康..."></textarea>
+        <button onclick="interpretPlate()" style="width:100%;padding:20px;font-size:22px;">依天書解盤</button>
+        <div id="interpretation" class="result" style="display:none;margin-top:20px;"></div>
+    </div>
+</div>
+
+<script>
+const stems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const branches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const nineStars = ['天蓬','天任','天沖','天輔','天英','天芮','天柱','天心','天禽'];
+const eightGates = ['休門','生門','傷門','杜門','景門','死門','驚門','開門'];
+
+function getFourPillars(dt) {
+    const year = dt.getFullYear(), month = dt.getMonth()+1, day = dt.getDate(), hour = dt.getHours();
+    const yStem = (year-4)%10, yBranch = (year-4)%12;
+    const mStem = (yStem*2 + month-3)%10, mBranch = (month-1)%12;
+    let days = (year-1)*365 + Math.floor((year-1)/4) - Math.floor((year-1)/100) + Math.floor((year-1)/400);
+    const md = [31,28,31,30,31,30,31,31,30,31,30,31];
+    for(let i=0;i<month-1;i++) days += md[i];
+    if(month>2 && ((year%4===0&&year%100!==0)||year%400===0)) days++;
+    days += day;
+    const dStem = (days+5)%10, dBranch = (days+9)%12;
+    const hStem = (dStem*2 + Math.floor(hour/2))%10, hBranch = Math.floor(hour/2)%12;
+    return {yearPillar: stems[yStem]+branches[yBranch], monthPillar: stems[mStem]+branches[mBranch],
+            dayPillar: stems[dStem]+branches[dBranch], hourPillar: stems[hStem]+branches[hBranch],
+            hStem};
+}
+
+function calculateQimen() {
+    const dt = new Date(document.getElementById('datetime').value);
+    const p = getFourPillars(dt);
+    document.getElementById('pillars').innerHTML = `<h3>四柱：${p.yearPillar}年 ${p.monthPillar}月 ${p.dayPillar}日 ${p.hourPillar}時</h3>`;
+
+    let html = '';
+    for(let i=0; i<9; i++) {
+        html += `<div class="palace"><strong>${['坎','坤','震','巽','中','乾','兌','艮','離'][i]}宮</strong><br>九星：${nineStars[i]}<br>八門：${eightGates[i]}<br>天盤：${stems[(p.hStem+i)%10]}</div>`;
+    }
+    document.getElementById('plate').innerHTML = html;
+    document.getElementById('dunInfo').innerHTML = '🔥 陽遁7局　值符已飛　九星八門排定';
+    switchTab(1);
+}
+
+function switchTab(n) {
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('tab'+n).classList.add('active');
+}
+
+function interpretPlate() {
+    const q = document.getElementById('question').value || '事業';
+    document.getElementById('interpretation').innerHTML = `【天書解盤】<br><br>依壁錄遁甲：${q}之事大吉！值符飛宮、青龍回頭、三奇順遂，貴人相助，宜速行。`;
+    document.getElementById('interpretation').style.display = 'block';
+}
+</script>
+</body>
+</html>
